@@ -25,6 +25,7 @@ def log_call(role, model, prompt_tokens, completion_tokens,
 
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "event": "model_call",
         "role": role,
         "model": model,
         "prompt_tokens": prompt_tokens,
@@ -36,6 +37,25 @@ def log_call(role, model, prompt_tokens, completion_tokens,
     }
     if error:
         entry["error"] = error
+
+    with LOG_FILE.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def log_blocked(role, reason, path=None, command=None):
+    """Log a guardrail block event."""
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "event": "blocked",
+        "role": role,
+        "reason": reason,
+    }
+    if path:
+        entry["path"] = str(path)
+    if command:
+        entry["command"] = command
 
     with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
